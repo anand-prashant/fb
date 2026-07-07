@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Lesson Feedback</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #F3F6F5;
+    --surface: #FFFFFF;
+    --ink: #16241F;
+    --ink-soft: #5B6B65;
+    --ink-faint: #93A19B;
+    --accent: #2F6F5E;
+    --accent-dark: #23554A;
+    --accent-soft: #DEEBE6;
+    --gold: #C69A3E;
+    --gold-soft: #F3E6C8;
+    --danger: #B4523F;
+    --line: #E3E9E6;
+    --shadow-sm: 0 1px 2px rgba(22,36,31,0.06);
+    --shadow-md: 0 8px 24px rgba(22,36,31,0.08);
+    --shadow-lg: 0 20px 48px rgba(22,36,31,0.14);
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter','Noto Sans Devanagari',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  html[lang="hi"] body{ font-family:'Noto Sans Devanagari','Inter',sans-serif; }
+
+  button, input, textarea{ font-family:inherit; }
+
+  /* ---------- Language Overlay ---------- */
+  #langOverlay{
+    position:fixed; inset:0;
+    background: radial-gradient(120% 120% at 50% -10%, #1F3A32 0%, #16241F 65%);
+    display:flex; align-items:center; justify-content:center;
+    z-index:100; padding:24px;
+  }
+  .lang-card{
+    background:var(--surface);
+    border-radius:20px;
+    padding:36px 26px 30px;
+    width:100%; max-width:380px;
+    text-align:center;
+    box-shadow:var(--shadow-lg);
+    animation: cardIn 0.6s var(--ease) both;
+  }
+  @keyframes cardIn{
+    from{ opacity:0; transform: translateY(18px) scale(0.97); }
+    to{ opacity:1; transform: translateY(0) scale(1); }
+  }
+  .lang-mark{
+    width:52px; height:52px; margin:0 auto 18px;
+    border-radius:14px;
+    background:linear-gradient(155deg, var(--accent), var(--accent-dark));
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:var(--shadow-md);
+  }
+  .lang-mark svg{ width:26px; height:26px; }
+  .lang-card h1{
+    font-size:19px; font-weight:700; margin:0 0 6px; letter-spacing:-0.01em;
+  }
+  .lang-card p{
+    font-size:14px; color:var(--ink-soft); margin:0 0 26px; line-height:1.5;
+  }
+  .lang-options{ display:flex; flex-direction:column; gap:10px; }
+  .lang-btn{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:15px 18px;
+    border:1.5px solid var(--line);
+    border-radius:13px;
+    background:var(--surface);
+    cursor:pointer;
+    transition: border-color 0.25s var(--ease), background 0.25s var(--ease), transform 0.2s var(--ease);
+    text-align:left;
+  }
+  .lang-btn:active{ transform: scale(0.98); }
+  .lang-btn:hover{ border-color: var(--accent); background:var(--accent-soft); }
+  .lang-btn .lb-main{ font-size:15.5px; font-weight:600; color:var(--ink); }
+  .lang-btn .lb-sub{ font-size:12.5px; color:var(--ink-faint); margin-top:1px; }
+  .lang-btn .lb-arrow{ color:var(--accent); font-size:18px; transition: transform 0.25s var(--ease); }
+  .lang-btn:hover .lb-arrow{ transform: translateX(3px); }
+
+  /* ---------- App Root ---------- */
+  #appRoot{
+    max-width:480px; margin:0 auto;
+    padding:20px 16px 48px;
+    opacity:0; transform: translateY(10px);
+    transition: opacity 0.55s var(--ease), transform 0.55s var(--ease);
+  }
+  #appRoot.visible{ opacity:1; transform:translateY(0); }
+
+  .eyebrow{
+    font-size:11.5px; font-weight:700; letter-spacing:0.11em; text-transform:uppercase;
+    color:var(--accent); margin:0 0 6px;
+  }
+  .page-title{
+    font-size:23px; font-weight:800; letter-spacing:-0.02em; margin:0 0 4px; line-height:1.25;
+  }
+  .page-sub{
+    font-size:14px; color:var(--ink-soft); margin:0 0 20px; line-height:1.5;
+  }
+
+  /* ---------- Ticket stub (lesson info) ---------- */
+  .ticket{
+    position:relative;
+    background:linear-gradient(160deg, var(--accent-dark), var(--accent));
+    border-radius:18px;
+    color:#fff;
+    box-shadow: var(--shadow-md);
+    margin-bottom:26px;
+    overflow:visible;
+  }
+  .ticket-main{
+    display:flex; justify-content:space-between; gap:14px;
+    padding:20px 20px 16px;
+  }
+  .ticket-field .tf-label{
+    font-size:10px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase;
+    color:rgba(255,255,255,0.65); margin-bottom:5px;
+  }
+  .ticket-field .tf-value{
+    font-size:15px; font-weight:700; letter-spacing:-0.01em;
+  }
+  .ticket-perf{
+    position:relative;
+    height:0; border-top:1.5px dashed rgba(255,255,255,0.35);
+    margin:0 18px;
+  }
+  .ticket-perf::before, .ticket-perf::after{
+    content:''; position:absolute; top:-9px;
+    width:18px; height:18px; border-radius:50%;
+    background:var(--bg);
+  }
+  .ticket-perf::before{ left:-27px; }
+  .ticket-perf::after{ right:-27px; }
+  .ticket-foot{
+    padding:14px 20px 18px;
+    font-size:12px; color:rgba(255,255,255,0.75);
+    display:flex; align-items:center; gap:7px;
+  }
+  .ticket-foot svg{ width:14px; height:14px; flex-shrink:0; }
+
+  /* ---------- Form ---------- */
+  .form-card{
+    background:var(--surface);
+    border-radius:18px;
+    padding:22px 18px;
+    box-shadow:var(--shadow-sm);
+    border:1px solid var(--line);
+  }
+  .field{ margin-bottom:20px; }
+  .field:last-child{ margin-bottom:0; }
+  .field-label{
+    display:block; font-size:13.5px; font-weight:600; color:var(--ink); margin-bottom:8px;
+  }
+  .field-label .opt{
+    font-weight:500; color:var(--ink-faint); font-size:12px; margin-left:4px;
+  }
+  .field input[type="text"], .field input[type="email"], .field textarea{
+    width:100%;
+    border:1.5px solid var(--line);
+    border-radius:12px;
+    padding:13px 14px;
+    font-size:15px;
+    color:var(--ink);
+    background:#FCFDFC;
+    transition: border-color 0.22s var(--ease), box-shadow 0.22s var(--ease), background 0.22s var(--ease);
+    outline:none;
+  }
+  .field input::placeholder, .field textarea::placeholder{ color:var(--ink-faint); }
+  .field input:focus, .field textarea:focus{
+    border-color:var(--accent);
+    background:#fff;
+    box-shadow: 0 0 0 4px var(--accent-soft);
+  }
+  .field textarea{ resize:vertical; min-height:88px; line-height:1.5; }
+  .field.error input, .field.error textarea{ border-color:var(--danger); }
+  .field-err{ display:none; font-size:12px; color:var(--danger); margin-top:6px; font-weight:500; }
+  .field.error .field-err{ display:block; }
+
+  /* section divider */
+  .section-divider{
+    display:flex; align-items:center; gap:10px;
+    margin: 26px 0 18px;
+  }
+  .section-divider span{
+    font-size:11.5px; font-weight:700; letter-spacing:0.09em; text-transform:uppercase;
+    color:var(--ink-faint); white-space:nowrap;
+  }
+  .section-divider::after{
+    content:''; flex:1; height:1px; background:var(--line);
+  }
+
+  /* ---------- Star Rating ---------- */
+  .rating-group{ margin-bottom:22px; }
+  .rating-group:last-child{ margin-bottom:0; }
+  .rating-row{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    flex-wrap:wrap;
+  }
+  .stars{ display:flex; gap:6px; }
+  .star-btn{
+    background:none; border:none; padding:2px; cursor:pointer;
+    line-height:0;
+    transition: transform 0.18s var(--ease);
+  }
+  .star-btn:active{ transform: scale(0.85); }
+  .star-btn svg{ width:30px; height:30px; transition: fill 0.25s var(--ease), stroke 0.25s var(--ease); }
+  .star-btn svg path{
+    fill:#fff; stroke:var(--line); stroke-width:1.5;
+    transition: fill 0.3s var(--ease), stroke 0.3s var(--ease);
+  }
+  .star-btn.filled svg path{ fill:var(--gold); stroke:var(--gold); }
+  .star-btn.pop svg{ animation: starPop 0.38s var(--ease); }
+  @keyframes starPop{
+    0%{ transform:scale(1); } 40%{ transform:scale(1.28); } 100%{ transform:scale(1); }
+  }
+  .rating-hint{
+    font-size:12px; color:var(--ink-faint); min-width:60px; text-align:right; font-weight:500;
+  }
+
+  /* ---------- Segmented Yes/No ---------- */
+  .segmented{
+    display:flex; border:1.5px solid var(--line); border-radius:12px; padding:4px; background:#FCFDFC;
+  }
+  .seg-btn{
+    flex:1; text-align:center; padding:11px 10px; border:none; background:transparent;
+    border-radius:9px; font-size:14.5px; font-weight:600; color:var(--ink-soft);
+    cursor:pointer; transition: background 0.25s var(--ease), color 0.25s var(--ease), box-shadow 0.25s var(--ease);
+  }
+  .seg-btn.active{
+    background:var(--accent); color:#fff; box-shadow:var(--shadow-sm);
+  }
+
+  /* ---------- Submit ---------- */
+  .submit-btn{
+    width:100%; margin-top:26px;
+    background:var(--accent);
+    color:#fff; border:none; border-radius:13px;
+    padding:16px; font-size:15.5px; font-weight:700; letter-spacing:0.01em;
+    cursor:pointer;
+    box-shadow: 0 10px 22px rgba(47,111,94,0.28);
+    transition: transform 0.2s var(--ease), background 0.2s var(--ease), box-shadow 0.2s var(--ease);
+    display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+  .submit-btn:active{ transform: scale(0.98); }
+  .submit-btn:hover{ background:var(--accent-dark); }
+  .submit-btn:disabled{ opacity:0.65; cursor:not-allowed; transform:none; }
+  .spinner{
+    width:16px; height:16px; border-radius:50%;
+    border:2.5px solid rgba(255,255,255,0.4); border-top-color:#fff;
+    animation: spin 0.7s linear infinite; display:none;
+  }
+  .submit-btn.loading .spinner{ display:inline-block; }
+  .submit-btn.loading .btn-label{ display:none; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  .form-note{
+    font-size:12px; color:var(--ink-faint); text-align:center; margin-top:14px; line-height:1.5;
+  }
+
+  /* ---------- Success State ---------- */
+  #successView{
+    display:none;
+    text-align:center;
+    padding:50px 20px 30px;
+  }
+  #successView.visible{ display:block; animation: cardIn 0.5s var(--ease) both; }
+  .success-mark{
+    width:66px; height:66px; margin:0 auto 20px;
+    border-radius:50%;
+    background:var(--accent-soft);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .success-mark svg{ width:30px; height:30px; }
+  #successView h2{ font-size:20px; font-weight:800; margin:0 0 8px; letter-spacing:-0.01em; }
+  #successView p{ font-size:14px; color:var(--ink-soft); line-height:1.6; margin:0 0 26px; max-width:320px; margin-left:auto; margin-right:auto; }
+  .again-btn{
+    background:none; border:1.5px solid var(--line); color:var(--ink);
+    padding:12px 22px; border-radius:11px; font-size:14px; font-weight:600; cursor:pointer;
+    transition: border-color 0.2s var(--ease), background 0.2s var(--ease);
+  }
+  .again-btn:hover{ border-color:var(--accent); background:var(--accent-soft); }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.01ms !important; transition-duration:0.01ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== LANGUAGE SELECTION OVERLAY ===================== -->
+<div id="langOverlay">
+  <div class="lang-card">
+    <div class="lang-mark">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M5 8h11M10.5 5v3M8 8c0 4 2.5 6.5 6 8M13.5 8c-.6 3-2.7 5.3-6.5 7M16 21l3.5-8L23 21M17.3 18.5h4.4" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <h1>Choose your language</h1>
+    <p>अपनी भाषा चुनें<br>Select a language to continue to the feedback form.</p>
+    <div class="lang-options">
+      <button class="lang-btn" onclick="selectLanguage('en')">
+        <span>
+          <span class="lb-main">English</span>
+          <span class="lb-sub">Continue in English</span>
+        </span>
+        <span class="lb-arrow">→</span>
+      </button>
+      <button class="lang-btn" onclick="selectLanguage('hi')">
+        <span>
+          <span class="lb-main">हिंदी</span>
+          <span class="lb-sub">हिंदी में जारी रखें</span>
+        </span>
+        <span class="lb-arrow">→</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MAIN APP ===================== -->
+<div id="appRoot">
+
+  <p class="eyebrow" data-i18n="eyebrow">Lesson Feedback</p>
+  <h1 class="page-title" data-i18n="title">Tell us how the lesson went</h1>
+  <p class="page-sub" data-i18n="subtitle">Your honest feedback helps us improve every future session.</p>
+
+  <!-- Ticket stub with lesson info -->
+  <div class="ticket">
+    <div class="ticket-main">
+      <div class="ticket-field">
+        <div class="tf-label" data-i18n="facultyLabel">Faculty</div>
+        <div class="tf-value" id="facultyValue">Anand Prashant</div>
+      </div>
+      <div class="ticket-field" style="text-align:right">
+        <div class="tf-label" data-i18n="dateLabel">Date</div>
+        <div class="tf-value" id="dateValue">08 July 2026</div>
+      </div>
+    </div>
+    <div class="ticket-perf"></div>
+    <div class="ticket-foot">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 21s-7-4.6-9.5-9.1C.7 8.4 2.4 5 5.8 4.6 8 4.4 9.6 5.4 12 8c2.4-2.6 4-3.6 6.2-3.4 3.4.4 5.1 3.8 3.3 7.3C19 16.4 12 21 12 21z" fill="#fff" fill-opacity="0.9"/></svg>
+      <span data-i18n="ticketFoot">This feedback stub confirms the lesson you're reviewing.</span>
+    </div>
+  </div>
+
+  <!-- Form -->
+  <form id="feedbackForm" class="form-card" novalidate>
+
+    <div class="field" id="field-name">
+      <label class="field-label" data-i18n="nameLabel">Your name</label>
+      <input type="text" id="studentName" data-i18n-placeholder="namePlaceholder" placeholder="e.g. Riya Sharma" autocomplete="name">
+      <div class="field-err" data-i18n="requiredError">This field is required.</div>
+    </div>
+
+    <div class="field" id="field-class">
+      <label class="field-label" data-i18n="classLabel">Class / Section</label>
+      <input type="text" id="studentClass" data-i18n-placeholder="classPlaceholder" placeholder="e.g. 10-B" autocomplete="off">
+      <div class="field-err" data-i18n="requiredError">This field is required.</div>
+    </div>
+
+    <div class="field" id="field-email">
+      <label class="field-label"><span data-i18n="emailLabel">Email ID</span><span class="opt" data-i18n="optional">(optional)</span></label>
+      <input type="email" id="studentEmail" data-i18n-placeholder="emailPlaceholder" placeholder="e.g. riya@example.com" autocomplete="email">
+    </div>
+
+    <div class="section-divider"><span data-i18n="ratingsHeading">Rate this lesson</span></div>
+
+    <div class="rating-group" id="field-understanding">
+      <div class="rating-row">
+        <label class="field-label" style="margin-bottom:0" data-i18n="understandingLabel">Understanding of the concept taught</label>
+      </div>
+      <div class="rating-row" style="margin-top:10px">
+        <div class="stars" data-rating="understanding"></div>
+        <span class="rating-hint" data-hint="understanding" data-i18n="notRated">Not rated</span>
+      </div>
+    </div>
+
+    <div class="rating-group" id="field-communication">
+      <div class="rating-row">
+        <label class="field-label" style="margin-bottom:0" data-i18n="communicationLabel">Faculty's communication</label>
+      </div>
+      <div class="rating-row" style="margin-top:10px">
+        <div class="stars" data-rating="communication"></div>
+        <span class="rating-hint" data-hint="communication" data-i18n="notRated">Not rated</span>
+      </div>
+    </div>
+
+    <div class="rating-group" id="field-delivery">
+      <div class="rating-row">
+        <label class="field-label" style="margin-bottom:0" data-i18n="deliveryLabel">Overall lecture delivery</label>
+      </div>
+      <div class="rating-row" style="margin-top:10px">
+        <div class="stars" data-rating="delivery"></div>
+        <span class="rating-hint" data-hint="delivery" data-i18n="notRated">Not rated</span>
+      </div>
+    </div>
+
+    <div class="section-divider"><span data-i18n="moreHeading">One more thing</span></div>
+
+    <div class="field" id="field-more">
+      <label class="field-label" data-i18n="moreSessionsLabel">Would you like more sessions by this faculty?</label>
+      <div class="segmented">
+        <button type="button" class="seg-btn" id="btnYes" data-i18n="yes" onclick="setWantMore(true)">Yes</button>
+        <button type="button" class="seg-btn" id="btnNo" data-i18n="no" onclick="setWantMore(false)">No</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label"><span data-i18n="suggestionsLabel">Any suggestions?</span><span class="opt" data-i18n="optional">(optional)</span></label>
+      <textarea id="suggestions" data-i18n-placeholder="suggestionsPlaceholder" placeholder="Tell us what could be even better..."></textarea>
+    </div>
+
+    <button type="submit" class="submit-btn" id="submitBtn">
+      <span class="btn-label" data-i18n="submitBtn">Submit feedback</span>
+      <span class="spinner"></span>
+    </button>
+    <p class="form-note" data-i18n="formNote">Your responses are shared with the training team only.</p>
+  </form>
+
+  <!-- Success -->
+  <div id="successView">
+    <div class="success-mark">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4.5 4.5L19 8" stroke="#2F6F5E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <h2 data-i18n="successTitle">Thank you!</h2>
+    <p data-i18n="successMsg">Your feedback has been recorded. It genuinely helps us make the next lesson better.</p>
+    <button class="again-btn" onclick="resetForm()" data-i18n="newResponse">Submit another response</button>
+  </div>
+
+</div>
+
+<script>
+/* =========================================================================
+   CONFIG — edit these two lines for each new lesson / deployment
+   ========================================================================= */
+  const FACULTY_NAME   = "Anand Prashant";
+  const FEEDBACK_DATE  = "08 July 2026";
+
+  // Paste your deployed Google Apps Script Web App URL here (see setup guide).
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwqap_zn2ts_RkfkOmT6HFlS5HnmZrU-wC7hjAdCJ9Yl--5fLZarMVP3amIyXaYwoE/exec";
+
+/* =========================================================================
+   TRANSLATIONS
+   ========================================================================= */
+  const translations = {
+    en: {
+      eyebrow: "Lesson Feedback",
+      title: "Tell us how the lesson went",
+      subtitle: "Your honest feedback helps us improve every future session.",
+      facultyLabel: "Faculty",
+      dateLabel: "Date",
+      ticketFoot: "Please share your feedback on the lesson you just completed.",
+      nameLabel: "Your name",
+      namePlaceholder: "e.g. Riya Sharma",
+      classLabel: "Class / Section",
+      classPlaceholder: "e.g. 10-B",
+      emailLabel: "Email ID",
+      emailPlaceholder: "e.g. riya@example.com",
+      optional: "(optional)",
+      ratingsHeading: "Rate this lesson",
+      understandingLabel: "Understanding of the concept taught",
+      communicationLabel: "Faculty's communication",
+      deliveryLabel: "Overall lecture delivery",
+      notRated: "Not rated",
+      rated1: "Poor", rated2: "Fair", rated3: "Good", rated4: "Very good", rated5: "Excellent",
+      moreHeading: "One more thing",
+      moreSessionsLabel: "Would you like more sessions by this faculty?",
+      yes: "Yes",
+      no: "No",
+      suggestionsLabel: "Any suggestions?",
+      suggestionsPlaceholder: "Tell us what could be even better...",
+      submitBtn: "Submit feedback",
+      formNote: "Your feedback is confidential and will only be used to improve this course.",
+      requiredError: "This field is required.",
+      ratingError: "Please rate this before submitting.",
+      moreError: "Please select yes or no.",
+      successTitle: "Thank you!",
+      successMsg: "Your feedback has been recorded. It genuinely helps us make the next lesson better.",
+      newResponse: "Submit another response",
+      submitError: "Something went wrong. Please try again."
+    },
+    hi: {
+  eyebrow: "Lesson Feedback",
+  title: "बताइए, Lesson कैसा रहा?",
+  subtitle: "आपका ईमानदार Feedback हमें आने वाले हर Session को और बेहतर बनाने में मदद करता है।",
+
+  facultyLabel: "Faculty",
+  dateLabel: "Date",
+
+  ticketFoot: "अभी-अभी पूरा किए गए Lesson के बारे में अपना Feedback साझा करें।",
+
+  nameLabel: "आपका नाम",
+  namePlaceholder: "जैसे, रिया शर्मा",
+
+  classLabel: "Class / Section",
+  classPlaceholder: "जैसे, 10-B",
+
+  emailLabel: "Email ID",
+  emailPlaceholder: "जैसे, riya@example.com",
+
+  optional: "(वैकल्पिक)",
+
+  ratingsHeading: "इस Lesson को Rate करें",
+
+  understandingLabel: "Concept कितनी अच्छी तरह समझ आया?",
+  communicationLabel: "Faculty का Communication",
+  deliveryLabel: "Overall Lesson Delivery",
+
+  notRated: "Rating नहीं दी गई",
+
+  rated1: "बहुत खराब",
+  rated2: "ठीक-ठाक",
+  rated3: "अच्छा",
+  rated4: "बहुत अच्छा",
+  rated5: "शानदार",
+
+  moreHeading: "एक आख़िरी सवाल",
+
+  moreSessionsLabel: "क्या आप इस Faculty के साथ और Sessions लेना चाहेंगे?",
+
+  yes: "हाँ",
+  no: "नहीं",
+
+  suggestionsLabel: "कोई सुझाव?",
+  suggestionsPlaceholder: "बताइए, इसे और बेहतर कैसे बनाया जा सकता है...",
+
+  submitBtn: "Feedback Submit करें",
+
+  formNote: "आपका Feedback गोपनीय रखा जाएगा और इसका उपयोग केवल इस Course को बेहतर बनाने के लिए किया जाएगा।",
+
+  requiredError: "यह फ़ील्ड भरना आवश्यक है।",
+  ratingError: "Submit करने से पहले कृपया Rating दें।",
+  moreError: "कृपया हाँ या नहीं चुनें।",
+
+  successTitle: "धन्यवाद!",
+
+  successMsg: "आपका Feedback सफलतापूर्वक दर्ज हो गया है। इससे हमें आने वाले Lessons को और बेहतर बनाने में मदद मिलेगी।",
+
+  newResponse: "एक और Feedback दें",
+
+  submitError: "कुछ गड़बड़ हो गई। कृपया दोबारा प्रयास करें।"
+}
+  };
+
+  let currentLang = 'en';
+  const state = { understanding: 0, communication: 0, delivery: 0, wantMore: null };
+
+  document.getElementById('facultyValue').textContent = FACULTY_NAME;
+  document.getElementById('dateValue').textContent = FEEDBACK_DATE;
+
+  const starSVG = `<svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6.1 6.6.7-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.2 1.3-6.6-4.9-4.6 6.6-.7L12 2.5z"/></svg>`;
+
+  function buildStars(){
+    document.querySelectorAll('.stars').forEach(container => {
+      const key = container.dataset.rating;
+      container.innerHTML = '';
+      for(let i=1;i<=5;i++){
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'star-btn';
+        btn.innerHTML = starSVG;
+        btn.setAttribute('aria-label', 'Rate ' + i);
+        btn.addEventListener('click', () => setRating(key, i));
+        container.appendChild(btn);
+      }
+    });
+  }
+
+  function setRating(key, value){
+    state[key] = value;
+    const container = document.querySelector('.stars[data-rating="'+key+'"]');
+    const buttons = container.querySelectorAll('.star-btn');
+    buttons.forEach((b, idx) => {
+      b.classList.toggle('filled', idx < value);
+    });
+    const justFilled = buttons[value-1];
+    justFilled.classList.remove('pop');
+    void justFilled.offsetWidth;
+    justFilled.classList.add('pop');
+
+    const t = translations[currentLang];
+    const hint = document.querySelector('[data-hint="'+key+'"]');
+    hint.textContent = t['rated'+value];
+    document.getElementById('field-'+key).classList.remove('error');
+  }
+
+  function setWantMore(value){
+    state.wantMore = value;
+    document.getElementById('btnYes').classList.toggle('active', value === true);
+    document.getElementById('btnNo').classList.toggle('active', value === false);
+    document.getElementById('field-more').classList.remove('error');
+  }
+
+  function applyTranslations(){
+    const t = translations[currentLang];
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const k = el.getAttribute('data-i18n');
+      if(t[k] !== undefined) el.textContent = t[k];
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      const k = el.getAttribute('data-i18n-placeholder');
+      if(t[k] !== undefined) el.placeholder = t[k];
+    });
+    ['understanding','communication','delivery'].forEach(key => {
+      const hint = document.querySelector('[data-hint="'+key+'"]');
+      hint.textContent = state[key] > 0 ? t['rated'+state[key]] : t.notRated;
+    });
+  }
+
+  function selectLanguage(lang){
+    currentLang = lang;
+    document.documentElement.lang = lang;
+    applyTranslations();
+    const overlay = document.getElementById('langOverlay');
+    overlay.style.transition = 'opacity 0.4s ease';
+    overlay.style.opacity = '0';
+    setTimeout(() => { overlay.style.display = 'none'; }, 400);
+    document.getElementById('appRoot').classList.add('visible');
+  }
+
+  function validate(){
+    let ok = true;
+    const t = translations[currentLang];
+
+    const name = document.getElementById('studentName').value.trim();
+    const cls = document.getElementById('studentClass').value.trim();
+
+    toggleFieldError('field-name', name === '');
+    toggleFieldError('field-class', cls === '');
+    if(name === '' || cls === '') ok = false;
+
+    ['understanding','communication','delivery'].forEach(key => {
+      const bad = state[key] === 0;
+      document.getElementById('field-'+key).classList.toggle('error', bad);
+      if(bad) ok = false;
+    });
+
+    if(state.wantMore === null){
+      document.getElementById('field-more').classList.add('error');
+      ok = false;
+    }
+
+    return ok;
+  }
+
+  function toggleFieldError(id, isError){
+    document.getElementById(id).classList.toggle('error', isError);
+  }
+
+  document.getElementById('feedbackForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    if(!validate()){
+      const firstError = document.querySelector('.error');
+      if(firstError) firstError.scrollIntoView({behavior:'smooth', block:'center'});
+      return;
+    }
+
+    const payload = {
+      faculty: FACULTY_NAME,
+      lessonDate: FEEDBACK_DATE,
+      name: document.getElementById('studentName').value.trim(),
+      classSection: document.getElementById('studentClass').value.trim(),
+      email: document.getElementById('studentEmail').value.trim(),
+      understanding: state.understanding,
+      communication: state.communication,
+      delivery: state.delivery,
+      wantMoreSessions: state.wantMore ? 'Yes' : 'No',
+      suggestions: document.getElementById('suggestions').value.trim(),
+      language: currentLang,
+      submittedAt: new Date().toISOString()
+    };
+
+    const btn = document.getElementById('submitBtn');
+    btn.classList.add('loading');
+    btn.disabled = true;
+
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    })
+    .then(() => {
+      document.getElementById('feedbackForm').style.display = 'none';
+      document.querySelector('.ticket').style.display = 'none';
+      document.getElementById('successView').classList.add('visible');
+    })
+    .catch(() => {
+      alert(translations[currentLang].submitError);
+    })
+    .finally(() => {
+      btn.classList.remove('loading');
+      btn.disabled = false;
+    });
+  });
+
+  function resetForm(){
+    document.getElementById('feedbackForm').reset();
+    state.understanding = 0; state.communication = 0; state.delivery = 0; state.wantMore = null;
+    buildStars();
+    document.getElementById('btnYes').classList.remove('active');
+    document.getElementById('btnNo').classList.remove('active');
+    ['understanding','communication','delivery'].forEach(key=>{
+      document.querySelector('[data-hint="'+key+'"]').textContent = translations[currentLang].notRated;
+    });
+    document.getElementById('feedbackForm').style.display = 'block';
+    document.querySelector('.ticket').style.display = 'block';
+    document.getElementById('successView').classList.remove('visible');
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+
+  buildStars();
+</script>
+</body>
+</html>
