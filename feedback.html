@@ -345,7 +345,7 @@
       </div>
       <div class="ticket-field" style="text-align:right">
         <div class="tf-label" data-i18n="dateLabel">Date</div>
-        <div class="tf-value" id="dateValue">08 July 2026</div>
+        <div class="tf-value" id="dateValue"></div>
       </div>
     </div>
     <div class="ticket-perf"></div>
@@ -442,6 +442,16 @@
 </div>
 
 <script>
+  const today = new Date();
+
+const formattedDate = today.toLocaleDateString("en-GB", {
+  day: "2-digit",
+  month: "long",
+  year: "numeric"
+});
+
+document.getElementbyId("dateValue").innerText = today;
+// Output: 08 July 2026
 /* =========================================================================
    CONFIG — edit these two lines for each new lesson / deployment
    ========================================================================= */
